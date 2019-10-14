@@ -1,43 +1,36 @@
 
+
 import time, socket, sys
 import matplotlib.pyplot as plt
-#import matplotlib.animation as animation
+
 from matplotlib import style
 
+from pathCalc import Path
+
+v=[]
+w=[]
 m=[]
 g=[]
+
 for i in range(1,9):
     
     for j in range(1,9):
         m.append(j)
         g.append(i)
     
-##    m=[]
-##    g=[]
-
-
-
-##plt.title('Sample Plot')
-##plt.show()
-
-
-
-
-
 style.use('fivethirtyeight')
 p=[]
 q=[]
 l=[]
-
-##def function(p,q):
-##    fig.add_subplot(1,1,1).plot(p,q)
-
-
+dx=0
+dy=0
+path=Path()
+flag=0
 plt.ion()
 
 
 message=""
-print("\nWelcome to Chat Room\n")
+print("\nWelcome to the Room\n")
 print("Initialising....\n")
 time.sleep(1)
 
@@ -50,70 +43,104 @@ print(host, "(", ip, ")\n")
 name = input(str("Enter your name: "))
            
 s.listen(1)
-print("\nWaiting for incoming connections...\n")
+print("\nWaiting for incoming connections from the client...\n")
 conn, addr = s.accept()
-print("Received connection from ", addr[0], "(", addr[1], ")\n")
-#k=1
+print("Received connection from client  ", addr[0], "(", addr[1], ")\n")
 s_name = conn.recv(1024)
 s_name = s_name.decode()
 
-print(s_name, "has connected to the chat room\nEnter [e] to exit chat room\n")
+print(s_name, "has connected to the chat room\nEnter 'e' to exit chat room\n")
 conn.send(name.encode())
 j=0
 i=0
 
-
-
 while(i<100):
-        
 
         if(len(l)==0):
             message="Enter Starting Point : "
+            flag=2
             
-        
-        
-        elif(l[i]==2):
-            message ="True"
-            i+=1
                 
         else:
-            message="False"
+            message="True"
             i+=1
+           
+            
         if(i==1):
-            message="Enter Destination Point : "    
+            message="Enter Destination Point : "
+            flag=1
+            
     
-        if (message == "[e]"):
-            message = "Left room!"
+        if (message == "e"):
+            message = "Left the room!"
             conn.send(message.encode())
             print("\n")
+            flag=3
             break
+        
         else:
-            conn.send(message.encode())
             
+            conn.send(message.encode())
             
         message = conn.recv(1024)
         plt.close('all')        
-        message = message.decode()
-            
+        message = message.decode()    
         l.append(message)
+
+        
+        
         x,y=l[i].split(',')
+
+
+        if(flag==1):
+
+            dx=int(x)
+            dy=int(y)
+            path.setDestinationPoints(int(x),int(y))
+            
+            v,w=path.calc_path()
+            flag=3
+            n=1
+        elif(flag==2):
+            
+            path.setStartingPoints(int(x),int(y))
+            p.append(int(x))
+            q.append(int(y))
+            
+        if((int(x) in v )and (int(y) in w) and (i!=1)):
+            if((int(x) == v[n] )and (int(y) == w[n])):
+                if(int(x)==dx and int(y)==dy):
+                    
+                    conn.send('Reached Destination'.encode())
+                    p.append(int(dx))
+                    q.append(int(dy))
+                else:
+                    p.append(int(x))
+                    q.append(int(y))
+                    n+=1
+                
+                
+            else:
         
-        
-        p.append(int(x))
-        q.append(int(y))
+                conn.send('Shortest Path Not Chosen'.encode())
+                
+                del l[i]
+                i-=1
         
         try:
-            plt.plot(p,q,g,m,'ro')
-           
-            #plt.plot(m,g,color='k')
-            #ani = animation.FuncAnimation(fig, func=function(p,q), interval=1000)
+            plt.plot(p,q,g,m,'ro') 
             plt.show(block=False)
+            
             plt.pause(3)
+            
 
         except ValueError:
+            
             print("I don't think you have sent number coordinates !! Send again !!")
             i-=1
  
         print(s_name, ":", message)
-        print(p)
+        print(v)
+        print(w)
+
        
